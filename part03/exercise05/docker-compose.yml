@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  vote:
+    image: python:3.11
+    container_name: vote_app
+    working_dir: /app
+    volumes:
+      - ./vote:/app
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "5000:5000"
+    command: sh -c "pip install flask redis && python app.py"
+    depends_on:
+      - redis
+    networks:
+      - voting_network
+    restart: always
+
+  result:
+    image: node:18
+    container_name: result_app
+    working_dir: /app
+    volumes:
+      - ./result:/app
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/voting
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "5001:5001"
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - voting_network
+    restart: always
+
+  redis:
+    image: redis:latest
+    container_name: redis_voting
+    ports:
+      - "6379:6379"
+    networks:
+      - voting_network
+    restart: always
+
+  worker:
+    image: openjdk:11-jre-slim
+    container_name: worker_service
+    working_dir: /app
+    volumes:
+      - ./worker:/app
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/voting
+    command: sh -c "java -jar worker.jar"
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - voting_network
+    restart: always
+
+  postgres:
+    image: postgres:13
+    container_name: postgres_voting
+    environment:
+      POSTGRES_DB: voting
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - voting_network
+    restart: always
+
+networks:
+  voting_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

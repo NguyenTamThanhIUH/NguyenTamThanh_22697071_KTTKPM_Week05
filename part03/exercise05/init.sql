@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS results (
+  id SERIAL PRIMARY KEY,
+  vote VARCHAR(100),
+  count INT DEFAULT 0
+);

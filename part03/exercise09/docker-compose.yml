@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud_cont
+    environment:
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: admin_password
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud_user
+      MYSQL_PASSWORD: nextcloud_pass
+      MYSQL_HOST: mariadb
+      REDIS_HOST: redis
+    ports:
+      - "80:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - nextcloud_network
+    restart: always
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb_cont
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud_user
+      MYSQL_PASSWORD: nextcloud_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - nextcloud_network
+    restart: always
+
+  redis:
+    image: redis:latest
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    networks:
+      - nextcloud_network
+    restart: always
+
+networks:
+  nextcloud_network:
+    driver: bridge
+
+volumes:
+  nextcloud_data:
+  mariadb_data:

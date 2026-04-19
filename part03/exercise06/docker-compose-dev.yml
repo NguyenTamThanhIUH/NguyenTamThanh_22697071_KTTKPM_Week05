@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app-dev:
+    image: python:3.11
+    container_name: app_dev
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+    ports:
+      - "5000:5000"
+    command: sh -c "pip install flask && python app.py"
+    restart: always
+
+  tests:
+    image: python:3.11
+    container_name: tests_runner
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: sh -c "pip install pytest flask && python -m pytest tests/ -v --tb=short"
+    depends_on:
+      - app-dev
+    restart: on-failure
+
+networks:
+  dev_network:
+    driver: bridge

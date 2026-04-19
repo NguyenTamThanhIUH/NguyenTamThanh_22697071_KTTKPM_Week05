@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_password
+      MONGO_INITDB_DATABASE: nodejs_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+    networks:
+      - nodejs_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nodejs:
+    image: node:18
+    container_name: nodejs_app
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    environment:
+      MONGO_URI: mongodb://admin:admin_password@mongodb:27017/nodejs_db
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm start"
+    restart: always
+    networks:
+      - nodejs_network
+
+networks:
+  nodejs_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
