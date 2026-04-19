@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: node_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nodedb
+      MYSQL_USER: nodeuser
+      MYSQL_PASSWORD: nodepass
+    ports:
+      - "3306:3306"
+    restart: always
+
+  nodejs:
+    image: node:20
+    container_name: nodejs_app
+    depends_on:
+      - mysql
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      DB_HOST: mysql
+      DB_USER: nodeuser
+      DB_PASSWORD: nodepass
+      DB_NAME: nodedb
+    ports:
+      - "3001:3000"
+    command: sh -c "npm install && npm start"
+    restart: always

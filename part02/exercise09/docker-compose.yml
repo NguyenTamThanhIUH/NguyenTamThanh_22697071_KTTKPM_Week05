@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  flask:
+    image: python:3.11
+    container_name: flask_app
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+    ports:
+      - "5000:5000"
+    command: sh -c "pip install flask && python app.py"
+    restart: always
